@@ -1,0 +1,35 @@
+apiVersion: platform.confluent.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: req-channel
+  namespace: confluent
+spec:
+  replicas: 1
+  partitionCount: 1
+  configs:
+    cleanup.policy: "delete"
+
+---
+
+apiVersion: platform.confluent.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: knw-channel
+  namespace: confluent
+spec:
+  replicas: 1
+  partitionCount: 1
+  configs:
+    cleanup.policy: "delete"
+---
+
+apiVersion: platform.confluent.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: sys-channel
+  namespace: confluent
+spec:
+  replicas: 1
+  partitionCount: 1
+  configs:
+    cleanup.policy: "delete"
