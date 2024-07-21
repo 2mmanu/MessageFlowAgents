@@ -1,23 +1,15 @@
+import threading
 from confluent_kafka import Producer, Consumer, KafkaException, KafkaError
-from bus.blackboard import Blackboard
+
 
 class Bus:
 
-    _REQ_CH_TOPIC = "req-channel"
-    _KNW_CH_TOPIC = "knw-channel"
-    _SYS_CH_TOPIC = "sys-channel"
-
-    def __init__(self, bootstrap_servers, group_id, agent_id):
-        self._c_req_ch = self._consumer(bootstrap_servers,f"req-ch-{group_id}")
-        self._c_knw_ch = self._consumer(bootstrap_servers,f"knw-ch-{group_id}")
-        self._c_sys_ch = self._consumer(bootstrap_servers,f"sys-ch-{group_id}")
-        self._p_req_ch = self._producer(bootstrap_servers)
-        self._p_knw_ch = self._producer(bootstrap_servers)
-        self._p_sys_ch = self._producer(bootstrap_servers)
-        self._blackboard = Blackboard()
-        self._agent_id = agent_id
-        self._hello_word_message()
-
+    def __init__(self, queues, topic, bootstrap_servers, group_id):
+        self._q_in = queues[0]
+        self._q_out = queues[1]
+        self._topic = topic
+        self._c_ch = self._consumer(bootstrap_servers,group_id)
+        self._p_ch = self._producer(bootstrap_servers)
 
     def _producer(self,bootstrap_servers):
         producer_config = {
@@ -29,22 +21,24 @@ class Bus:
         consumer_config = {
             'bootstrap.servers': bootstrap_servers,
             'group.id': group_id,
+            'client.id': f"{group_id}-0",
             'auto.offset.reset': 'earliest',
             # 'debug': 'all',
         }
         return Consumer(**consumer_config)
 
-    @staticmethod
-    def _produce(producer, topic, key, value):
-        producer.produce(topic, key=key, value=value)
-        producer.flush()
+    def _produce(self):
+        while True:
+            key, value = self._q_out.get()
+            self._p_ch.produce(self._topic, key=key, value=value)
+            self._p_ch.flush()
+            self._q_out.task_done()
 
-    @staticmethod
-    def _consume(consumer, topics, poll_timeout=1.0):
-        # try:
-            consumer.subscribe(topics)
+    def _consume(self):
+        try:
+            self._c_ch.subscribe([self._topic])
             while True:
-                msg = consumer.poll(poll_timeout)
+                msg = self._c_ch.poll(1.0)
                 if msg is None: continue
                 if msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
@@ -54,50 +48,18 @@ class Bus:
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
-                    return msg.topic(), msg.key().decode('utf-8'), msg.value().decode('utf-8')
-        # finally:
-        #     # Close down consumer to commit final offsets.
-        #     self.consumer.close()
+                    # TODO Filter messages only for the specified agent_id (for sys + all)
+                    self._q_in.put((msg.topic(), msg.key().decode('utf-8'), msg.value().decode('utf-8')))
+        finally:
+            self._c_ch.close()
 
-    def consume_req_ch(self,fn):
-        return self._consume(self.consume_req_ch, [self._REQ_CH_TOPIC], fn, poll_timeout=1.0)
+    def _start_consume(self):
+        # TODO scale to number of partition (1 partition = 1 th)
+        threading.Thread(target=self._consume, daemon=True).start()
     
-    def consume_knw_ch(self,fn):
-        return self._consume(self.consume_knw_ch, [self._KNW_CH_TOPIC], fn, poll_timeout=1.0)
+    def _start_produce(self):
+        threading.Thread(target=self._produce, daemon=True).start()
 
-    def consume_sys_ch(self,fn):
-        return self._consume(self.consume_sys_ch, [self._SYS_CH_TOPIC], fn, poll_timeout=1.0)
-
-    def produce_req_ch(self,key, value):
-        self._p_req_ch.produce(self._REQ_CH_TOPIC, key=key, value=value)
-
-    def produce_knw_ch(self,key, value):
-        self._p_knw_ch.produce(self._KNW_CH_TOPIC, key=key, value=value)
-
-    def produce_sys_ch(self,key, value):
-        self._p_sys_ch.produce(self._SYS_CH_TOPIC, key=key, value=value)
-
-    def _informative_msg(self,content, ontology):
-        msg = f"""
-        (inform
-            :performative "inform"
-            :sender (agent-identifier :name {self._agent_id})
-            :receiver (set (agent-identifier :name :all))
-            :content "{content}"
-            :language English
-            :ontology {ontology}
-        )
-        """
-        return msg
-
-    def _hello_word_message(self):
-        self.produce_sys_ch("FIPA-ACL",self._informative_msg(f"New agent available: {self._agent_id}","AgentAvailability"))
-        
-    def write(self, address, data):
-        self._blackboard.write(address, data)
-        self.produce_sys_ch("FIPA-ACL",self._informative_msg(f"Data written to {address} by {self._agent_id}","Notification"))
-
-    def read(self, address):
-        data = self._blackboard.read(address)
-        self.produce_sys_ch("FIPA-ACL",self._informative_msg(f"Data accessed at {address} by {self._agent_id}","Notification"))
-        return data
+    def start(self):
+        self._start_consume()
+        self._start_produce()

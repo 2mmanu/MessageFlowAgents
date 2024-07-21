@@ -12,8 +12,6 @@ class TestAgent(unittest.TestCase):
     def test_agent_messages(self):
         agents = [Agent() for _ in range(3)]
         
-        sleep(10)
-
         messages = []
 
         for i in range(3):
@@ -21,16 +19,15 @@ class TestAgent(unittest.TestCase):
             messages.append(message)
 
         self.assertEqual(len(messages), 3)
+        
 
         a0 = agents[0]
         a1 = agents[1]
 
-        a0.bus.write('0','data-value')
-        data = a1.bus.read('0')
+        a0.write('0','data-value')
+        data = a1.read('0')
     
         self.assertEqual('data-value', data.decode('ascii'))
-
-        sleep(10)
 
         messages = []
 
@@ -39,6 +36,15 @@ class TestAgent(unittest.TestCase):
             messages.append(message)
 
         self.assertEqual(len(messages), 2)
+
+        # a1.ask_kb("question")
+        # _, _, message = consume(consumer(bootstrap_servers='localhost:9092', group_id="test"),["knw-channel"])
+        # self.assertEqual(messages, "question")
+
+        # a1.send_request("request")
+        # _, _, message = consume(consumer(bootstrap_servers='localhost:9092', group_id="test"),["req-channel"])
+        # self.assertEqual(messages, "request")
+
 
     @classmethod
     def tearDownClass(cls):
