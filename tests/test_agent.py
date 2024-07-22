@@ -37,15 +37,6 @@ class TestAgent(unittest.TestCase):
 
         self.assertEqual(len(messages), 2)
 
-        # a1.ask_kb("question")
-        # _, _, message = consume(consumer(bootstrap_servers='localhost:9092', group_id="test"),["knw-channel"])
-        # self.assertEqual(messages, "question")
-
-        # a1.send_request("request")
-        # _, _, message = consume(consumer(bootstrap_servers='localhost:9092', group_id="test"),["req-channel"])
-        # self.assertEqual(messages, "request")
-
-
     @classmethod
     def tearDownClass(cls):
         cls.consumer.close()

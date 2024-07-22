@@ -251,7 +251,7 @@ class FipaAclMessage:
     def get_receiver(self):
         if not self.receiver or not self.receiver.agents:
             return "all"
-        return [agent.name for agent in self.receiver.agents]
+        return [agent.name for agent in self.receiver.agents][0]
 
 class FipaAclMessageValidator:
     @staticmethod

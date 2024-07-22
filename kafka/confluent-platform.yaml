@@ -14,7 +14,7 @@ spec:
     resources:
       requests:
         cpu: 500m
-        memory: 256Mi
+        memory: 512Mi
     podSecurityContext:
       fsGroup: 1000
       runAsUser: 1000
@@ -30,7 +30,7 @@ spec:
   image:
     application: confluentinc/cp-server:7.6.0
     init: confluentinc/confluent-init-container:2.8.0
-  dataVolumeCapacity: 1Gi
+  dataVolumeCapacity: 2Gi
   configOverrides:
     server:
     # https://docs.confluent.io/platform/current/installation/configuration/broker-configs.html#advertised-listeners
@@ -51,7 +51,7 @@ spec:
   podTemplate:
     resources:
       requests:
-        cpu: 500m
+        cpu: 1000m
         memory: 512Mi
     podSecurityContext:
       fsGroup: 1000
@@ -79,7 +79,7 @@ spec:
     resources:
       requests:
         cpu: 500m
-        memory: 256Mi
+        memory: 512Mi
     probe:
       liveness:
         periodSeconds: 10
@@ -109,7 +109,7 @@ spec:
     resources:
       requests:
         cpu: 500m
-        memory: 256Mi
+        memory: 512Mi
     probe:
       liveness:
         periodSeconds: 10
@@ -147,7 +147,7 @@ spec:
     resources:
       requests:
         cpu: 500m
-        memory: 256Mi
+        memory: 512Mi
     probe:
       liveness:
         periodSeconds: 10
@@ -181,7 +181,7 @@ spec:
     resources:
       requests:
         cpu: 500m
-        memory: 256Mi
+        memory: 512Mi
     podSecurityContext:
       fsGroup: 1000
       runAsUser: 1000
@@ -204,7 +204,7 @@ spec:
     resources:
       requests:
         cpu: 500m
-        memory: 256Mi
+        memory: 512Mi
     podSecurityContext:
       fsGroup: 1000
       runAsUser: 1000

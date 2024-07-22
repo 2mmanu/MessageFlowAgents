@@ -13,6 +13,7 @@ class Bus:
         self._c_ch = self._consumer(bootstrap_servers,group_id)
         self._p_ch = self._producer(bootstrap_servers)
         self._filter = filter
+        self._name = group_id
 
     def _producer(self,bootstrap_servers):
         producer_config = {
@@ -43,13 +44,11 @@ class Bus:
             finally:
                 self._q_out.task_done()
             
-            
-
     def _consume(self):
         try:
             self._c_ch.subscribe([self._topic])
             while True:
-                msg = self._c_ch.poll(1.0)
+                msg = self._c_ch.poll(timeout=1.0)
                 if msg is None: continue
                 if msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
@@ -59,13 +58,14 @@ class Bus:
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
-                    # t = msg.topic()
-                    # k = msg.key().decode('utf-8')
-                    m = msg.value().decode('utf-8')
                     try:
+                        # t = msg.topic()
+                        # k = msg.key().decode('utf-8')
+                        m = msg.value().decode('utf-8')
                         m = FipaAclMessage.from_json(m)
-                        if not filter or (filter and m.get_receiver in [self.agent_id, ":all"]):
+                        if not self._filter or (self._filter and m.get_receiver() in [self.agent_id, "all"]):
                             self._q_in.put(m)
+                            self._q_in.join()
                     except:
                         # TODO warning
                         pass
@@ -74,10 +74,10 @@ class Bus:
 
     def _start_consume(self):
         # TODO scale to number of partition (1 partition = 1 th)
-        threading.Thread(target=self._consume, daemon=True).start()
+        threading.Thread(target=self._consume, daemon=True, name=f"c_{self._name}").start()
     
     def _start_produce(self):
-        threading.Thread(target=self._produce, daemon=True).start()
+        threading.Thread(target=self._produce, daemon=True, name=f"p_{self._name}").start()
 
     def start(self):
         self._start_consume()

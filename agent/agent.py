@@ -58,7 +58,9 @@ class Agent:
     
     def _receive_msg(self,q_name):
         q_in = self._qm.get_queue(name=q_name,direction="in")
-        return q_in.get()
+        message = q_in.get()
+        q_in.task_done()
+        return message
     
     def _hello_word_message(self):
         message = FipaAclMessage(
@@ -96,19 +98,36 @@ class Agent:
         self._send_msg(q_name="q-sys",key="FIPA-ACL",msg=message)
         return data
     
-    def ask_kb(self,question):
-        self._send_msg(
-            q_name="q-knw",
-            key="message",
-            msg=question
-            )
-        # return self._receive_msg(
-        #     q_name="q-knw"
-        # )
+    def get_sys_info(self):
+        message = self._receive_msg("q-sys")
+        return message.to_dict()
     
-    def send_request(self,request):
-        self._send_msg(
-            q_name="q-req",
-            key="request",
-            msg=request
-            )
+    def ask_kb(self, ontology, question, receiver_id, language="English"):
+        message = FipaAclMessage(
+            performative="query-ref",
+            sender = AgentIdentifier(name=self.agent_id),
+            receiver = Receiver([AgentIdentifier(name=receiver_id)]),
+            content = question,
+            language = language,
+            ontology = ontology,
+        )
+        self._send_msg(q_name="q-knw",key="FIPA-ACL",msg=message)
+        
+    def get_kb_question(self):
+        message = self._receive_msg("q-knw")
+        return message.to_dict()
+
+    def send_request(self, ontology, request, receiver_id, language="English"):
+        message = FipaAclMessage(
+            performative="request",
+            sender = AgentIdentifier(name=self.agent_id),
+            receiver = Receiver([AgentIdentifier(name=receiver_id)]),
+            content = request,
+            language = language,
+            ontology = ontology,
+        )
+        self._send_msg(q_name="q-req",key="FIPA-ACL",msg=message)
+
+    def get_request(self):
+        message = self._receive_msg("q-req")
+        return message.to_dict()
