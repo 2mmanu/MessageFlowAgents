@@ -1,32 +1,46 @@
 import threading
+from enum import Enum
 from confluent_kafka import Producer, Consumer, KafkaException, KafkaError
 from bus.message import FipaAclMessage, FipaAclMessageValidator
+from bus.config import BusSettings
 
+class BusType(Enum):
+    SYS="sys"
+    KNW="knw"
+    REQ="req"
 
 class Bus:
 
-    def __init__(self, agent_id, queues, topic, bootstrap_servers, group_id, filter=True):
+    def __init__(self, agent_id, queues, bus_type:BusType, bus_config:BusSettings=BusSettings(), filter=True):
         self.agent_id = agent_id
         self._q_in = queues[0]
         self._q_out = queues[1]
-        self._topic = topic
-        self._c_ch = self._consumer(bootstrap_servers,group_id)
-        self._p_ch = self._producer(bootstrap_servers)
+        if bus_type == BusType.KNW:
+            self._topic = bus_config.channels.ch_knw_name
+            self._name = f"{self.agent_id}k"
+        elif bus_type == BusType.REQ:
+            self._topic = bus_config.channels.ch_req_name
+            self._name = f"{self.agent_id}r"
+        elif bus_type == BusType.SYS:
+            self._topic = bus_config.channels.ch_sys_name
+            self._name = f"{self.agent_id}s"
+        self._c_ch = self._consumer(bus_config.channels.dns,self._name)
+        self._p_ch = self._producer(bus_config.channels.dns)
         self._filter = filter
-        self._name = group_id
+        
 
     def _producer(self,bootstrap_servers):
         producer_config = {
-            'bootstrap.servers': bootstrap_servers
+            'bootstrap.servers': f"{bootstrap_servers.host}:{bootstrap_servers.port}"
         }
         return Producer(**producer_config)
     
     def _consumer(self,bootstrap_servers,group_id):
         consumer_config = {
-            'bootstrap.servers': bootstrap_servers,
+            'bootstrap.servers': f"{bootstrap_servers.host}:{bootstrap_servers.port}",
             'group.id': group_id,
             'client.id': f"{group_id}-0",
-            'auto.offset.reset': 'earliest',
+            'auto.offset.reset': 'latest',
             # 'debug': 'all',
         }
         return Consumer(**consumer_config)

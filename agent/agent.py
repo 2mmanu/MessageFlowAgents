@@ -1,24 +1,21 @@
 import uuid
-import queue
-from bus.core import Bus
+from bus.core import Bus, BusType
 from bus.queue import QueueManager
 from bus.blackboard import Blackboard
 from bus.message import AgentIdentifier, Receiver, FipaAclMessage
+from bus.config import BusSettings
 
 class Agent:
 
-    _REQ_CH_TOPIC = "req-channel"
-    _KNW_CH_TOPIC = "knw-channel"
-    _SYS_CH_TOPIC = "sys-channel"
-
-    def __init__(self, agent_id=None, topics=None):
+    def __init__(self, agent_id=None, topics=None, bus_config:BusSettings=BusSettings()):
         
         if not agent_id:
             agent_id = uuid.uuid4().hex[:8]
         self.agent_id = agent_id
         self.topics = topics
+        self.bus_config = bus_config
         
-        self._blackboard = Blackboard()
+        self._blackboard = Blackboard(bus_config.blackboard)
         
         self._qm = QueueManager()
         self._qm.create_queues("q-req")
@@ -28,23 +25,20 @@ class Agent:
         self._bus_req = Bus(
             self.agent_id,
             self._qm.get_queues("q-req"),
-            self._REQ_CH_TOPIC,
-            bootstrap_servers='localhost:9092',
-            group_id=f"{self.agent_id}r",
+            BusType.REQ,
+            self.bus_config,
         )
         self._bus_knw = Bus(
             self.agent_id,
             self._qm.get_queues("q-knw"),
-            self._KNW_CH_TOPIC,
-            bootstrap_servers='localhost:9092',
-            group_id=f"{self.agent_id}k",
+            BusType.KNW,
+            self.bus_config,
         )
         self._bus_sys = Bus(
             self.agent_id,
             self._qm.get_queues("q-sys"),
-            self._SYS_CH_TOPIC,
-            bootstrap_servers='localhost:9092',
-            group_id=f"{self.agent_id}s",
+            BusType.SYS,
+            self.bus_config,
         )
         self._bus_req.start()
         self._bus_knw.start()

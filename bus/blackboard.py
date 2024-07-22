@@ -1,8 +1,9 @@
 import redis
+from bus.config import BlackboardSettings
     
 class Blackboard:
-    def __init__(self, host='localhost', port=6379, db=0):
-        self.client = redis.StrictRedis(host=host, port=port, db=db, password="h1qeEKs3TK")
+    def __init__(self, blackboard_config:BlackboardSettings=BlackboardSettings()):
+        self.client = redis.StrictRedis(host=blackboard_config.dns.host, port=blackboard_config.dns.port, password=blackboard_config.redis_pwd.get_secret_value())
 
     def write(self, address, data):
         self.client.set(address, data)

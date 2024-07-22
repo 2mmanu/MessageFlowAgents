@@ -1,5 +1,4 @@
 import unittest
-from time import sleep
 from agent import Agent  
 from utils.kafka import consumer,consume
 
@@ -10,7 +9,7 @@ class TestAgent(unittest.TestCase):
         cls.consumer = consumer(bootstrap_servers='localhost:9092', group_id="test")
 
     def test_agent_messages(self):
-        agents = [Agent() for _ in range(3)]
+        agents = [Agent(agent_id=f"test{i}") for i in range(3)]
         
         messages = []
 
