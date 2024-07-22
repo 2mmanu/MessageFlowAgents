@@ -1,15 +1,18 @@
 import threading
 from confluent_kafka import Producer, Consumer, KafkaException, KafkaError
+from bus.message import FipaAclMessage, FipaAclMessageValidator
 
 
 class Bus:
 
-    def __init__(self, queues, topic, bootstrap_servers, group_id):
+    def __init__(self, agent_id, queues, topic, bootstrap_servers, group_id, filter=True):
+        self.agent_id = agent_id
         self._q_in = queues[0]
         self._q_out = queues[1]
         self._topic = topic
         self._c_ch = self._consumer(bootstrap_servers,group_id)
         self._p_ch = self._producer(bootstrap_servers)
+        self._filter = filter
 
     def _producer(self,bootstrap_servers):
         producer_config = {
@@ -30,9 +33,17 @@ class Bus:
     def _produce(self):
         while True:
             key, value = self._q_out.get()
-            self._p_ch.produce(self._topic, key=key, value=value)
-            self._p_ch.flush()
-            self._q_out.task_done()
+            flag , message = FipaAclMessageValidator.validate(value)
+            try:
+                if not flag:
+                    raise ValueError(message)
+                else:
+                    self._p_ch.produce(self._topic, key=key, value=value.to_json())
+                    self._p_ch.flush()
+            finally:
+                self._q_out.task_done()
+            
+            
 
     def _consume(self):
         try:
@@ -48,8 +59,16 @@ class Bus:
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
-                    # TODO Filter messages only for the specified agent_id (for sys + all)
-                    self._q_in.put((msg.topic(), msg.key().decode('utf-8'), msg.value().decode('utf-8')))
+                    # t = msg.topic()
+                    # k = msg.key().decode('utf-8')
+                    m = msg.value().decode('utf-8')
+                    try:
+                        m = FipaAclMessage.from_json(m)
+                        if not filter or (filter and m.get_receiver in [self.agent_id, ":all"]):
+                            self._q_in.put(m)
+                    except:
+                        # TODO warning
+                        pass
         finally:
             self._c_ch.close()
 

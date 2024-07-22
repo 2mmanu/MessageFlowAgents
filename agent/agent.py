@@ -3,6 +3,7 @@ import queue
 from bus.core import Bus
 from bus.queue import QueueManager
 from bus.blackboard import Blackboard
+from bus.message import AgentIdentifier, Receiver, FipaAclMessage
 
 class Agent:
 
@@ -10,11 +11,12 @@ class Agent:
     _KNW_CH_TOPIC = "knw-channel"
     _SYS_CH_TOPIC = "sys-channel"
 
-    def __init__(self, agent_id=None):
+    def __init__(self, agent_id=None, topics=None):
         
         if not agent_id:
             agent_id = uuid.uuid4().hex[:8]
         self.agent_id = agent_id
+        self.topics = topics
         
         self._blackboard = Blackboard()
         
@@ -23,38 +25,31 @@ class Agent:
         self._qm.create_queues("q-knw")
         self._qm.create_queues("q-sys")
         
-        self._bus_req = Bus(self._qm.get_queues("q-req"),
-                            self._REQ_CH_TOPIC,
-                            bootstrap_servers='localhost:9092',
-                            group_id=f"{self.agent_id}r",
-                            )
-        self._bus_knw = Bus(self._qm.get_queues("q-knw"),
-                            self._KNW_CH_TOPIC,
-                            bootstrap_servers='localhost:9092',
-                            group_id=f"{self.agent_id}k",
-                            )
-        self._bus_sys = Bus(self._qm.get_queues("q-sys"),
-                            self._SYS_CH_TOPIC,
-                            bootstrap_servers='localhost:9092',
-                            group_id=f"{self.agent_id}s",
-                            )
+        self._bus_req = Bus(
+            self.agent_id,
+            self._qm.get_queues("q-req"),
+            self._REQ_CH_TOPIC,
+            bootstrap_servers='localhost:9092',
+            group_id=f"{self.agent_id}r",
+        )
+        self._bus_knw = Bus(
+            self.agent_id,
+            self._qm.get_queues("q-knw"),
+            self._KNW_CH_TOPIC,
+            bootstrap_servers='localhost:9092',
+            group_id=f"{self.agent_id}k",
+        )
+        self._bus_sys = Bus(
+            self.agent_id,
+            self._qm.get_queues("q-sys"),
+            self._SYS_CH_TOPIC,
+            bootstrap_servers='localhost:9092',
+            group_id=f"{self.agent_id}s",
+        )
         self._bus_req.start()
         self._bus_knw.start()
         self._bus_sys.start()
         self._hello_word_message()        
-
-    def _informative_msg(self,content, ontology):
-        msg = f"""
-        (inform
-            :performative "inform"
-            :sender (agent-identifier :name {self.agent_id})
-            :receiver (set (agent-identifier :name :all))
-            :content "{content}"
-            :language English
-            :ontology {ontology}
-        )
-        """
-        return msg
     
     def _send_msg(self,q_name,key,msg):
         q_out = self._qm.get_queue(name=q_name,direction="out")
@@ -66,27 +61,39 @@ class Agent:
         return q_in.get()
     
     def _hello_word_message(self):
-        self._send_msg(
-            q_name="q-sys",
-            key="FIPA-ACL",
-            msg=self._informative_msg(f"New agent available: {self.agent_id}","AgentAvailability")
-            )
+        message = FipaAclMessage(
+            performative = "inform",
+            sender = AgentIdentifier(name=self.agent_id),
+            receiver = Receiver(),
+            content = f"The agent {self.agent_id} is now available. You can ask about the following topics: {self.topics}",
+            language = "English",
+            ontology = "agent-availability"
+        )
+        self._send_msg(q_name="q-sys",key="FIPA-ACL",msg=message)
     
-    def write(self, address, data):
+    def write(self, address, data, receiver_id=None):
         self._blackboard.write(address, data)
-        self._send_msg(
-            q_name="q-sys",
-            key="FIPA-ACL",
-            msg=self._informative_msg(f"Data written to {address} by {self.agent_id}","Notification")
-            )
+        message = FipaAclMessage(
+            performative="inform",
+            sender = AgentIdentifier(name=self.agent_id),
+            receiver = Receiver() if receiver_id is None else Receiver([AgentIdentifier(name=receiver_id)]),
+            content = f"Data written to {address} by {self.agent_id}",
+            language = "English",
+            ontology = "data-availability"
+        )
+        self._send_msg(q_name="q-sys",key="FIPA-ACL",msg=message)
 
-    def read(self, address):
+    def read(self, address, receiver_id=None):
         data = self._blackboard.read(address)
-        self._send_msg(
-            q_name="q-sys",
-            key="FIPA-ACL",
-            msg=self._informative_msg(f"Data accessed at  {address} by {self.agent_id}","Notification")
-            )
+        message = FipaAclMessage(
+            performative="inform",
+            sender = AgentIdentifier(name=self.agent_id),
+            receiver = Receiver() if receiver_id is None else Receiver([AgentIdentifier(name=receiver_id)]),
+            content = f"Data accessed at {address} by {self.agent_id}",
+            language = "English",
+            ontology = "data-access"
+        )
+        self._send_msg(q_name="q-sys",key="FIPA-ACL",msg=message)
         return data
     
     def ask_kb(self,question):
