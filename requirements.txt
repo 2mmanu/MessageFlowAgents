@@ -1,3 +1,9 @@
-confluent-kafka==2.2.0
-redis==5.0.7
-pydantic-settings==2.3.4
+annotated-types==0.7.0 ; python_version >= "3.11" and python_version < "4.0"
+async-timeout==4.0.3 ; python_version >= "3.11" and python_full_version < "3.11.3"
+confluent-kafka==2.2.0 ; python_version >= "3.11" and python_version < "4.0"
+pydantic-core==2.20.1 ; python_version >= "3.11" and python_version < "4.0"
+pydantic-settings==2.3.4 ; python_version >= "3.11" and python_version < "4.0"
+pydantic==2.8.2 ; python_version >= "3.11" and python_version < "4.0"
+python-dotenv==1.0.1 ; python_version >= "3.11" and python_version < "4.0"
+redis==5.0.7 ; python_version >= "3.11" and python_version < "4.0"
+typing-extensions==4.12.2 ; python_version >= "3.11" and python_version < "4.0"

@@ -1,2 +1,31 @@
 [tool.pytest.ini_options]
 pythonpath = "."
+
+[tool.poetry]
+name = "agentlink"
+version = "0.1.0"
+description = ""
+authors = ["2mmanu <emmanuele.lacavalla@gmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/2mmanu/MessageFlowAgents"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+confluent-kafka = "2.2.0"
+redis = "5.0.7"
+pydantic-settings = "2.3.4"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+pre-commit = "^3.7.1"
+poetry-plugin-export = "^1.8.0"
+autoflake = "^2.3.1"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

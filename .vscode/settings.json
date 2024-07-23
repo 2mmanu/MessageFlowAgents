@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "python.analysis.autoFormatStrings": true,
+    "python.analysis.extraPaths": [
+        "./tests"
+    ]
+}

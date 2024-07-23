@@ -1,6 +1,7 @@
-import re
 import json
+import re
 from enum import Enum
+
 
 class Performative(Enum):
     # http://www.fipa.org/specs/fipa00037/SC00037J.html
@@ -76,7 +77,7 @@ class Performative(Enum):
     REQUEST_WHEN = "request-when"
     REQUEST_WHENEVER = "request-whenever"
     SUBSCRIBE = "subscribe"
-    
+
 
 class AgentIdentifier:
 
@@ -85,29 +86,29 @@ class AgentIdentifier:
 
     def __repr__(self):
         return f'(agent-identifier :name "{self.name}")'
-    
+
     @staticmethod
     def get_from_s_expression(expression):
         agent_pattern = re.compile(r'\(agent-identifier\s+:name\s+"([^"]+)"\)')
         agents = [AgentIdentifier(name=name) for name in agent_pattern.findall(expression)]
         return agents[0]
 
- 
+
 class Receiver:
     def __init__(self, *agents):
         self.agents = agents
 
     def __repr__(self):
         if not self.agents:
-            return '(set (agent-identifier :name :all))'
+            return "(set (agent-identifier :name :all))"
         return f'(set {" ".join(repr(agent) for agent in self.agents)})'
-    
+
     @staticmethod
     def get_from_s_expression(expression):
         agent_pattern = re.compile(r'\(agent-identifier\s+:name\s+"([^"]+)"\)')
         agents = [AgentIdentifier(name) for name in agent_pattern.findall(expression)]
         return Receiver(*agents)
-    
+
 
 class FipaAclMessage:
     """
@@ -142,34 +143,46 @@ class FipaAclMessage:
     reply_by : str, optional
         A time or deadline by which the sender expects a reply.
     """
-    def __init__(self, performative: Performative, sender, receiver, content, 
-                 reply_to=None, language=None, encoding=None, ontology=None, 
-                 protocol=None, conversation_id=None, 
-                 reply_with = None, in_reply_to = None, reply_by=None, 
-                  ):
+
+    def __init__(
+        self,
+        performative: Performative,
+        sender,
+        receiver,
+        content,
+        reply_to=None,
+        language=None,
+        encoding=None,
+        ontology=None,
+        protocol=None,
+        conversation_id=None,
+        reply_with=None,
+        in_reply_to=None,
+        reply_by=None,
+    ):
         # http://www.fipa.org/specs/fipa00061/SC00061G.html
         self.performative = Performative(performative)
         self.sender = sender
         self.receiver = receiver
         self.content = content
         self.reply_to = reply_to
-        self.language = language 
-        self.encoding = encoding 
+        self.language = language
+        self.encoding = encoding
         self.ontology = ontology
         self.protocol = protocol
         self.conversation_id = conversation_id
-        self.reply_with = reply_with 
-        self.in_reply_to = in_reply_to 
-        self.reply_by =  reply_by
+        self.reply_with = reply_with
+        self.in_reply_to = in_reply_to
+        self.reply_by = reply_by
 
     def __repr__(self):
         fields = [
             f':performative "{self.performative.value}"',
-            f':sender {repr(self.sender)}',
-            f':receiver {repr(self.receiver)}',
+            f":sender {repr(self.sender)}",
+            f":receiver {repr(self.receiver)}",
             f':content "{self.content}"',
-            f':language {self.language}',
-            f':ontology "{self.ontology}"'
+            f":language {self.language}",
+            f':ontology "{self.ontology}"',
         ]
 
         if self.reply_to:
@@ -187,8 +200,8 @@ class FipaAclMessage:
         if self.reply_by:
             fields.append(f':reply_by "{self.reply_by}"')
 
-        fields_str = '\n    '.join(fields)
-        return f'({self.performative.value}\n    {fields_str}\n)'
+        fields_str = "\n    ".join(fields)
+        return f"({self.performative.value}\n    {fields_str}\n)"
 
     def to_dict(self):
         message_dict = {
@@ -204,7 +217,7 @@ class FipaAclMessage:
             "conversation_id": self.conversation_id,
             "reply_with": self.reply_with,
             "in_reply_to": self.in_reply_to,
-            "reply_by": self.reply_by
+            "reply_by": self.reply_by,
         }
         return {k: v for k, v in message_dict.items() if v is not None}
 
@@ -253,6 +266,7 @@ class FipaAclMessage:
             return "all"
         return [agent.name for agent in self.receiver.agents][0]
 
+
 class FipaAclMessageValidator:
     @staticmethod
     def validate(message):
@@ -260,8 +274,8 @@ class FipaAclMessageValidator:
         for field in required_fields:
             if not getattr(message, field, None):
                 return False, f"Field '{field}' is missing."
-        
+
         if not isinstance(message.performative, Performative):
             return False, "Invalid performative."
-        
+
         return True, "Message is valid."

@@ -1,4 +1,4 @@
-# MessageFlowAgents
+# agentLINK
 
 This project presents an advanced implementation of agents designed to facilitate efficient information exchange through a Kafka-based communication bus.
 

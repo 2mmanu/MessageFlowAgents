@@ -1,0 +1,66 @@
+repos:
+  - repo: local
+    hooks:
+      - id: autoflake
+        name: autoflake
+        entry: poetry run autoflake
+        language: system
+        types: [python]
+        args:
+          [
+            "--remove-all-unused-imports",
+            "--remove-unused-variables",
+            "--in-place",
+            "--recursive",
+            "--ignore-init-module-imports",
+          ]
+      - id: isort
+        name: isort
+        entry: poetry run isort
+        language: system
+        types: [python]
+        args: ["--profile", "black"]
+        exclude: ^docs/
+      - id: black
+        name: black
+        entry: poetry run black
+        language: system
+        types: [python]
+        args:
+          [
+            "--line-length",
+            "140",
+            "--target-version",
+            "py310",
+            "--target-version",
+            "py311",
+          ]
+        exclude: ^docs/
+      - id: poetry-export requirements
+        name: export requirements
+        entry: poetry export
+        args:
+          [
+            "-o",
+            "requirements.txt",
+            "--without",
+            "dev,test",
+            "--without-hashes",
+          ]
+        verbose: true
+        language: system
+        pass_filenames: false
+      - id: poetry-export requirements dev
+        name: export requirements dev
+        entry: poetry export
+        args: ["-o", "requirements-dev.txt", "--only=dev", "--without-hashes"]
+        verbose: true
+        language: system
+        pass_filenames: false
+      - id: poetry-export requirements test
+        name: export requirements test
+        entry: poetry export
+        args: ["-o", "requirements-test.txt", "--only=test", "--without-hashes"]
+        verbose: true
+        language: system
+        pass_filenames: false
