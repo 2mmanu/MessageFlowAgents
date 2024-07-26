@@ -3,7 +3,7 @@ pythonpath = "."
 
 [tool.poetry]
 name = "agentlink"
-version = "0.1.1"
+version = "0.1.2.dev0"
 description = ""
 authors = ["2mmanu <emmanuele.lacavalla@gmail.com>"]
 license = "Apache-2.0"
@@ -12,8 +12,8 @@ repository = "https://github.com/2mmanu/agentLINK"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-confluent-kafka = "2.2.0"
-redis = "5.0.7"
+confluent-kafka = ">= 2.3, < 2.5"
+redis = "^5.0.7"
 pydantic-settings = "2.3.4"
 
 [tool.poetry.group.test.dependencies]

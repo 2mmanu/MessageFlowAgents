@@ -36,31 +36,31 @@ repos:
             "py311",
           ]
         exclude: ^docs/
-      - id: poetry-export requirements
-        name: export requirements
-        entry: poetry export
-        args:
-          [
-            "-o",
-            "requirements.txt",
-            "--without",
-            "dev,test",
-            "--without-hashes",
-          ]
-        verbose: true
-        language: system
-        pass_filenames: false
-      - id: poetry-export requirements dev
-        name: export requirements dev
-        entry: poetry export
-        args: ["-o", "requirements-dev.txt", "--only=dev", "--without-hashes"]
-        verbose: true
-        language: system
-        pass_filenames: false
-      - id: poetry-export requirements test
-        name: export requirements test
-        entry: poetry export
-        args: ["-o", "requirements-test.txt", "--only=test", "--without-hashes"]
-        verbose: true
-        language: system
-        pass_filenames: false
+      # - id: poetry-export requirements
+      #   name: export requirements
+      #   entry: poetry export
+      #   args:
+      #     [
+      #       "-o",
+      #       "requirements.txt",
+      #       "--without",
+      #       "dev,test",
+      #       "--without-hashes",
+      #     ]
+      #   verbose: true
+      #   language: system
+      #   pass_filenames: false
+      # - id: poetry-export requirements dev
+      #   name: export requirements dev
+      #   entry: poetry export
+      #   args: ["-o", "requirements-dev.txt", "--only=dev", "--without-hashes"]
+      #   verbose: true
+      #   language: system
+      #   pass_filenames: false
+      # - id: poetry-export requirements test
+      #   name: export requirements test
+      #   entry: poetry export
+      #   args: ["-o", "requirements-test.txt", "--only=test", "--without-hashes"]
+      #   verbose: true
+      #   language: system
+      #   pass_filenames: false

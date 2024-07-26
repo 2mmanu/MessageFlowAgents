@@ -9,9 +9,9 @@ class TestFipaAclMessage(unittest.TestCase):
 
         message = FipaAclMessage(
             performative="inform",
-            sender=AgentIdentifier(name="agent-sender"),
+            sender=AgentIdentifier(name="agentsender"),
             receiver=Receiver(),
-            content=f"The agent agent-sender is now available. You can ask about the following topics: A, B, C",
+            content=f"The agent agentsender is now available. You can ask about the following topics: A, B, C",
             language="English",
             ontology="agent-availability",
         )
@@ -21,7 +21,21 @@ class TestFipaAclMessage(unittest.TestCase):
         new_message = FipaAclMessage.from_json(msg_json)
 
         self.assertEqual(message.get_receiver(), new_message.get_receiver())
-        self.assertEqual(message.to_json(), new_message.to_json())
+        self.assertDictEqual(message.to_dict(), new_message.to_dict())
+
+    def test_json_message(self):
+        jmsg = """{
+            "performative": "query-ref",
+            "sender": "(agent-identifier :name 'agent0')",
+            "receiver": "(set [(agent-identifier :name 'eadd9034-1b60-41e3-b848-1eba174894c6')])",
+            "content": "question",
+            "language": "English",
+            "ontology": "question"
+        }"""
+
+        msg = FipaAclMessage.from_json(jmsg)
+        rec = msg.get_receiver()
+        self.assertEqual(str(rec), "eadd9034-1b60-41e3-b848-1eba174894c6")
 
 
 if __name__ == "__main__":

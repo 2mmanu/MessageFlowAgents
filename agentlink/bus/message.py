@@ -85,11 +85,11 @@ class AgentIdentifier:
         self.name = name
 
     def __repr__(self):
-        return f'(agent-identifier :name "{self.name}")'
+        return f"(agent-identifier :name {self.name})"
 
     @staticmethod
     def get_from_s_expression(expression):
-        agent_pattern = re.compile(r'\(agent-identifier\s+:name\s+"([^"]+)"\)')
+        agent_pattern = re.compile(r':name\s[\',"]?([a-f0-9-]{4,36}|[a-z0-9A-Z]+|all)')
         agents = [AgentIdentifier(name=name) for name in agent_pattern.findall(expression)]
         return agents[0]
 
@@ -100,12 +100,12 @@ class Receiver:
 
     def __repr__(self):
         if not self.agents:
-            return "(set (agent-identifier :name :all))"
+            return "(set (agent-identifier :name all))"
         return f'(set {" ".join(repr(agent) for agent in self.agents)})'
 
     @staticmethod
     def get_from_s_expression(expression):
-        agent_pattern = re.compile(r'\(agent-identifier\s+:name\s+"([^"]+)"\)')
+        agent_pattern = re.compile(r':name\s[\',"]?([a-f0-9-]{4,36}|[a-z0-9A-Z]+|all)')
         agents = [AgentIdentifier(name) for name in agent_pattern.findall(expression)]
         return Receiver(*agents)
 
