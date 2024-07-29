@@ -3,5 +3,6 @@
     "python.analysis.autoFormatStrings": true,
     "python.analysis.extraPaths": [
         "./tests"
-    ]
+    ],
+    "debugpy.debugJustMyCode": false
 }

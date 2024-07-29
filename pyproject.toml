@@ -3,7 +3,7 @@ pythonpath = "."
 
 [tool.poetry]
 name = "agentlink"
-version = "0.1.2.dev0"
+version = "0.1.2.dev1"
 description = ""
 authors = ["2mmanu <emmanuele.lacavalla@gmail.com>"]
 license = "Apache-2.0"

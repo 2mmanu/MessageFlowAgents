@@ -1,11 +1,10 @@
 from pydantic import Field, KafkaDsn, RedisDsn, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 class BlackboardSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
     dns: RedisDsn = Field(default="redis://localhost:6379/0")
-    redis_pwd: SecretStr
+    redis_pwd: SecretStr = Field(default=SecretStr("password"))
 
 
 class ChannelsSettings(BaseSettings):
